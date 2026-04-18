@@ -1,2 +1,327 @@
-
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>test</title></head><body><h1>テスト</h1></body></html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>タクシー給料計算</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="給料計算">
+<meta name="theme-color" content="#f5c518">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d; --surface: #161616; --card: #1e1e1e;
+    --accent: #f5c518; --accent2: #e8a900;
+    --text: #f0f0f0; --muted: #666; --border: #2a2a2a; --danger: #ff4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; min-height: 100vh; padding: 20px; max-width: 720px; margin: 0 auto; }
+  header { text-align: center; padding: 28px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; letter-spacing: 4px; color: var(--accent); }
+  header p { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+  .card-title { font-size: 0.68rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 12px; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  label { font-size: 0.85rem; color: #aaa; white-space: nowrap; }
+  input[type="number"], input[type="date"] { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 1rem; padding: 10px 12px; outline: none; }
+  input[type="number"] { width: 120px; }
+  input[type="date"] { width: 155px; color-scheme: dark; }
+  input:focus { border-color: var(--accent); }
+  .sales-input { flex: 1; min-width: 130px; }
+  .unit { font-size: 0.85rem; color: var(--muted); }
+  .note { font-size: 0.68rem; color: var(--muted); margin-top: 8px; }
+  .btn-add { background: var(--accent); color: #000; border: none; border-radius: 8px; padding: 10px 20px; font-family: 'Noto Sans JP', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+  .btn-add:active { opacity: 0.8; }
+  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .month-nav-title { font-size: 0.68rem; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+  .month-nav-ctrl { display: flex; align-items: center; gap: 8px; }
+  .nav-btn { background: none; border: 1px solid #444; border-radius: 6px; color: #aaa; cursor: pointer; padding: 4px 12px; font-size: 1rem; line-height: 1.4; }
+  .nav-btn:active { border-color: var(--accent); color: var(--accent); }
+  .month-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--accent); letter-spacing: 2px; min-width: 120px; text-align: center; }
+  .month-header { background: #252500; border: 1px solid #3a3500; border-radius: 10px; padding: 14px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+  .month-header.open { border-radius: 10px 10px 0 0; }
+  .month-title-txt { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 2px; color: var(--accent); white-space: nowrap; }
+  .month-sub { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+  .month-stats { display: flex; gap: 14px; align-items: flex-end; }
+  .ms-item { display: flex; flex-direction: column; align-items: flex-end; }
+  .ms-label { font-size: 0.62rem; color: var(--muted); }
+  .ms-val { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--text); }
+  .ms-val.accent { color: var(--accent); font-size: 1.2rem; }
+  .toggle { font-size: 0.75rem; color: var(--muted); margin-left: 10px; transition: transform 0.2s; display: inline-block; }
+  .toggle.open { transform: rotate(180deg); }
+  .month-body { background: #131300; border: 1px solid #3a3500; border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  thead th { text-align: right; color: var(--muted); font-size: 0.66rem; padding: 8px 10px; border-bottom: 1px solid #2a2a00; background: #0e0e00; font-weight: 400; }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid #1e1e00; }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 10px 10px; text-align: right; vertical-align: middle; }
+  td:first-child { text-align: left; color: var(--muted); font-size: 0.78rem; }
+  .fw { font-weight: 700; }
+  .pay { color: var(--accent); font-weight: 700; }
+  .btn-edit { background: none; border: 1px solid #333; border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 0.68rem; padding: 3px 6px; margin-right: 3px; }
+  .btn-edit:active { border-color: var(--accent); color: var(--accent); }
+  .btn-del { background: none; border: 1px solid #333; border-radius: 6px; color: var(--muted); cursor: pointer; font-size: 0.68rem; padding: 3px 6px; }
+  .btn-del:active { border-color: var(--danger); color: var(--danger); }
+  .empty { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 24px 0; }
+  .year-card { background: linear-gradient(135deg, #1a1800, #1e1e00, #161600); border: 1px solid var(--accent2); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
+  .year-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .year-card-title { font-size: 0.68rem; letter-spacing: 3px; color: var(--accent2); text-transform: uppercase; }
+  .year-ctrl { display: flex; align-items: center; gap: 8px; }
+  .year-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: var(--accent); letter-spacing: 2px; }
+  .ygrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .gi { display: flex; flex-direction: column; gap: 3px; }
+  .gl { font-size: 0.7rem; color: var(--muted); }
+  .gv { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: var(--text); line-height: 1; }
+  .gi.hl .gv { color: var(--accent); font-size: 1.9rem; }
+  .gc { font-size: 0.7rem; color: var(--muted); }
+  .btn-csv { display: block; width: 100%; background: none; border: 1px solid var(--accent2); border-radius: 8px; color: var(--accent2); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.84rem; padding: 11px; margin-bottom: 10px; }
+  .btn-import { display: block; width: 100%; background: none; border: 1px solid #4a8a4a; border-radius: 8px; color: #6abf6a; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.84rem; padding: 11px; margin-bottom: 10px; }
+  .btn-clear { display: block; width: 100%; background: none; border: 1px solid #333; border-radius: 8px; color: var(--muted); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.8rem; padding: 10px; margin-bottom: 40px; }
+  .overlay { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center; }
+  .overlay.show { display: flex; }
+  .modal { background: #1e1e1e; border: 1px solid var(--accent2); border-radius: 16px; padding: 24px; width: 90%; max-width: 340px; }
+  .modal h3 { font-size: 0.78rem; letter-spacing: 2px; color: var(--accent); margin-bottom: 16px; text-transform: uppercase; }
+  .mrow { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .mrow label { font-size: 0.78rem; color: #aaa; }
+  .mrow input { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Noto Sans JP', sans-serif; font-size: 1rem; padding: 10px 12px; outline: none; width: 100%; }
+  .mrow input:focus { border-color: var(--accent); }
+  .mbtns { display: flex; gap: 10px; margin-top: 16px; }
+  .mbtn-save { flex:1; background: var(--accent); color:#000; border:none; border-radius:8px; padding:11px; font-family:'Noto Sans JP',sans-serif; font-size:0.9rem; font-weight:700; cursor:pointer; }
+  .mbtn-cancel { flex:1; background:none; border:1px solid #444; border-radius:8px; padding:11px; color:var(--muted); font-family:'Noto Sans JP',sans-serif; font-size:0.9rem; cursor:pointer; }
+  @media(max-width:480px) { .ygrid { grid-template-columns: 1fr; } header h1 { font-size: 1.8rem; } }
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:2.4rem;margin-bottom:4px;">🚕</div>
+  <h1>TAXI SALARY CALC</h1>
+  <p>タクシードライバー 給料計算　｜　16日始め・翌月15日締め</p>
+</header>
+<div class="card">
+  <div class="card-title">⚙ 設定</div>
+  <div style="display:grid;grid-template-columns:auto 120px auto;align-items:center;gap:10px;">
+    <label>消費税率</label>
+    <input type="number" id="taxRate" value="10" min="0" max="99" step="0.1" oninput="recalc()">
+    <span class="unit">%</span>
+    <label>支給率　　</label>
+    <input type="number" id="payRate" value="64" min="0" max="100" step="0.1" oninput="recalc()">
+    <span class="unit">%</span>
+  </div>
+</div>
+<div class="card">
+  <div class="card-title">＋ 売上入力</div>
+  <div class="row">
+    <input type="date" id="dateInput">
+    <input type="number" class="sales-input" id="salesInput" placeholder="税込売上額（円）" min="0" step="1">
+    <button class="btn-add" onclick="addEntry()">追加</button>
+  </div>
+  <p class="note">税抜き売上 ＝ 税込売上 ÷ (1＋消費税率)　支給額 ＝ 税抜き売上 × 支給率</p>
+</div>
+<div class="card">
+  <div class="month-nav">
+    <div class="month-nav-title">📋 月別出番一覧</div>
+    <div class="month-nav-ctrl">
+      <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+      <span class="month-label" id="monthLabel">---</span>
+      <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+    </div>
+  </div>
+  <div id="listContainer"><p class="empty">まだ売上が入力されていません</p></div>
+</div>
+<div class="year-card" id="yearCard" style="display:none;">
+  <div class="year-card-top">
+    <div class="year-card-title">💰 年間合計</div>
+    <div class="year-ctrl">
+      <button class="nav-btn" onclick="changeYear(-1)">◀</button>
+      <span class="year-label" id="yearLabel">2026年</span>
+      <button class="nav-btn" onclick="changeYear(1)">▶</button>
+    </div>
+  </div>
+  <div class="ygrid">
+    <div class="gi"><span class="gl">税込売上合計</span><span class="gv" id="yTaxInc">¥0</span></div>
+    <div class="gi"><span class="gl">税抜き売上合計</span><span class="gv" id="yTaxEx">¥0</span></div>
+    <div class="gi hl"><span class="gl">支給額合計</span><span class="gv" id="yPay">¥0</span><span class="gc" id="yCount"></span></div>
+    <div class="gi"><span class="gl">平均支給額／出番</span><span class="gv" id="yAvg">¥0</span></div>
+  </div>
+</div>
+<button class="btn-csv" id="btnCsv" style="display:none;" onclick="exportCSV()">📥 CSVダウンロード（Google Drive保存用）</button>
+<button class="btn-import" onclick="document.getElementById('csvFile').click()">📤 CSVインポート（データ復元）</button>
+<input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="importCSV(event)">
+<button class="btn-clear" id="btnClear" style="display:none;" onclick="clearAll()">🗑 全データをクリア</button>
+<div class="overlay" id="editOverlay">
+  <div class="modal">
+    <h3>✏️ 売上を編集</h3>
+    <div class="mrow"><label>日付</label><input type="date" id="editDate"></div>
+    <div class="mrow"><label>税込売上額（円）</label><input type="number" id="editSales" min="0" step="1"></div>
+    <div class="mbtns">
+      <button class="mbtn-cancel" onclick="closeEdit()">キャンセル</button>
+      <button class="mbtn-save" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+<script>
+  let entries = JSON.parse(localStorage.getItem('taxiEntries4') || '[]');
+  const openMonths = new Set();
+  let currentMonthKey = null;
+  let currentYear = new Date().getFullYear();
+  let editIdx = -1;
+  (function() {
+    const t = new Date();
+    document.getElementById('dateInput').value =
+      t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+  })();
+  entries = entries.map(e => { const pm = getPayMonth(e.dateStr); return { ...e, payMonthKey: pm.key, payMonthLabel: pm.label }; });
+  save();
+  function fmt(n) { return '¥' + Math.round(n).toLocaleString('ja-JP'); }
+  function getPayMonth(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    if (d >= 16) { const nm = m===12?1:m+1; const ny = m===12?y+1:y; return { key: ny+'-'+String(nm).padStart(2,'0'), label: ny+'年'+nm+'月度' }; }
+    else { return { key: y+'-'+String(m).padStart(2,'0'), label: y+'年'+m+'月度' }; }
+  }
+  function getPeriodLabel(key) { const [y,m]=key.split('-').map(Number); const pm=m===1?12:m-1; const py=m===1?y-1:y; return py+'/'+pm+'/16 〜 '+y+'/'+m+'/15'; }
+  function groupByMonth() {
+    const map = {};
+    entries.forEach((e,idx) => { const k=e.payMonthKey; if(!map[k]) map[k]={label:e.payMonthLabel,key:k,items:[]}; map[k].items.push({...e,idx}); });
+    return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
+  }
+  function save() { localStorage.setItem('taxiEntries4', JSON.stringify(entries)); }
+  function addEntry() {
+    const dateVal=document.getElementById('dateInput').value;
+    const val=parseFloat(document.getElementById('salesInput').value);
+    if(!dateVal){alert('日付を入力してください');return;}
+    if(isNaN(val)||val<=0){alert('正しい売上額を入力してください');return;}
+    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
+    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
+    const taxEx=val/(1+taxRate); const pay=taxEx*payRate; const pm=getPayMonth(dateVal);
+    entries.push({dateStr:dateVal,taxInc:val,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label});
+    entries.sort((a,b)=>a.dateStr.localeCompare(b.dateStr));
+    currentMonthKey=pm.key; openMonths.add(pm.key); save();
+    document.getElementById('salesInput').value=''; render();
+  }
+  function deleteEntry(i) { if(!confirm('削除しますか？'))return; entries.splice(i,1); save(); render(); }
+  function recalc() {
+    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
+    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
+    entries=entries.map(e=>{const taxEx=e.taxInc/(1+taxRate);const pay=taxEx*payRate;const pm=getPayMonth(e.dateStr);return{...e,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label};});
+    save(); render();
+  }
+  function changeMonth(delta) {
+    const groups=groupByMonth(); if(groups.length===0)return;
+    const keys=groups.map(g=>g.key);
+    let idx=currentMonthKey?keys.indexOf(currentMonthKey):keys.length-1;
+    if(idx===-1)idx=keys.length-1; idx=(idx+delta+keys.length)%keys.length;
+    currentMonthKey=keys[idx]; render();
+  }
+  function toggleMonth(key) { if(openMonths.has(key))openMonths.delete(key); else openMonths.add(key); render(); }
+  function openEdit(i) { editIdx=i; document.getElementById('editDate').value=entries[i].dateStr; document.getElementById('editSales').value=entries[i].taxInc; document.getElementById('editOverlay').classList.add('show'); }
+  function closeEdit() { document.getElementById('editOverlay').classList.remove('show'); editIdx=-1; }
+  function saveEdit() {
+    const dateVal=document.getElementById('editDate').value;
+    const val=parseFloat(document.getElementById('editSales').value);
+    if(!dateVal){alert('日付を入力してください');return;}
+    if(isNaN(val)||val<=0){alert('正しい売上額を入力してください');return;}
+    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
+    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
+    const taxEx=val/(1+taxRate);const pay=taxEx*payRate;const pm=getPayMonth(dateVal);
+    entries[editIdx]={dateStr:dateVal,taxInc:val,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label};
+    entries.sort((a,b)=>a.dateStr.localeCompare(b.dateStr));
+    currentMonthKey=pm.key;openMonths.add(pm.key);save();closeEdit();render();
+  }
+  function changeYear(delta){currentYear+=delta;renderYearSummary();}
+  function renderYearSummary(){
+    const ye=entries.filter(e=>parseInt(e.dateStr.split('-')[0])===currentYear);
+    const ti=ye.reduce((s,e)=>s+e.taxInc,0),tx=ye.reduce((s,e)=>s+e.taxEx,0),tp=ye.reduce((s,e)=>s+e.pay,0);
+    document.getElementById('yearLabel').textContent=currentYear+'年';
+    document.getElementById('yTaxInc').textContent=fmt(ti);
+    document.getElementById('yTaxEx').textContent=fmt(tx);
+    document.getElementById('yPay').textContent=fmt(tp);
+    document.getElementById('yAvg').textContent=ye.length>0?fmt(tp/ye.length):'¥0';
+    document.getElementById('yCount').textContent=ye.length+'出番';
+  }
+  function render(){
+    const container=document.getElementById('listContainer');
+    const groups=groupByMonth();
+    if(entries.length===0){container.innerHTML='<p class="empty">まだ売上が入力されていません</p>';document.getElementById('monthLabel').textContent='---';document.getElementById('yearCard').style.display='none';document.getElementById('btnCsv').style.display='none';document.getElementById('btnClear').style.display='none';return;}
+    if(!currentMonthKey||!groups.find(g=>g.key===currentMonthKey))currentMonthKey=groups[groups.length-1].key;
+    const g=groups.find(g=>g.key===currentMonthKey);
+    document.getElementById('monthLabel').textContent=g?g.label:'---';
+    if(!g){container.innerHTML='<p class="empty">データがありません</p>';return;}
+    let mTaxInc=0,mTaxEx=0,mPay=0;
+    g.items.forEach(e=>{mTaxInc+=e.taxInc;mTaxEx+=e.taxEx;mPay+=e.pay;});
+    const isOpen=openMonths.has(g.key);
+    const period=getPeriodLabel(g.key);
+    let tableHtml='';
+    if(isOpen){
+      const rows=g.items.map(e=>{const[,mm,dd]=e.dateStr.split('-');return '<tr><td>'+parseInt(mm)+'月'+parseInt(dd)+'日<div style="margin-top:4px;"><button class="btn-edit" onclick="openEdit('+e.idx+')">✏️ 編集</button><button class="btn-del" onclick="deleteEntry('+e.idx+')">削除</button></div></td><td class="fw">'+fmt(e.taxInc)+'</td><td>'+fmt(e.taxEx)+'</td><td class="pay">'+fmt(e.pay)+'</td></tr>';}).join('');
+      tableHtml='<div class="month-body"><table><thead><tr><th style="text-align:left;">日付</th><th>税込売上</th><th>税抜き売上</th><th>支給額</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    }
+    container.innerHTML='<div><div class="month-header '+(isOpen?'open':'')+'" onclick="toggleMonth(''+g.key+'')"><div><div class="month-title-txt">'+g.label+'</div><div class="month-sub">'+period+'　'+g.items.length+'出番</div></div><div style="display:flex;align-items:center;gap:12px;"><div class="month-stats"><div class="ms-item"><span class="ms-label">税込売上</span><span class="ms-val">'+fmt(mTaxInc)+'</span></div><div class="ms-item"><span class="ms-label">支給額</span><span class="ms-val accent">'+fmt(mPay)+'</span></div></div><span class="toggle '+(isOpen?'open':'')+'">▼</span></div></div>'+tableHtml+'</div>';
+    document.getElementById('yearCard').style.display='block';
+    document.getElementById('btnCsv').style.display='block';
+    document.getElementById('btnClear').style.display='block';
+    renderYearSummary();
+  }
+  function exportCSV(){
+    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
+    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
+    let csv='﻿月度,日付,税込売上,税抜き売上,支給額
+';
+    entries.forEach(e=>{const[y,m,d]=e.dateStr.split('-');csv+=e.payMonthLabel+','+y+'/'+parseInt(m)+'/'+parseInt(d)+','+Math.round(e.taxInc)+','+Math.round(e.taxEx)+','+Math.round(e.pay)+'
+';});
+    const groups=groupByMonth();
+    csv+='
+月度別集計
+月度,出番数,税込売上合計,税抜き売上合計,支給額合計
+';
+    groups.forEach(g=>{let ti=0,tx=0,tp=0;g.items.forEach(e=>{ti+=e.taxInc;tx+=e.taxEx;tp+=e.pay;});csv+=g.label+','+g.items.length+','+Math.round(ti)+','+Math.round(tx)+','+Math.round(tp)+'
+';});
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    const t=new Date();
+    a.href=url;a.download='タクシー給料_'+t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'.csv';
+    a.click();URL.revokeObjectURL(url);
+  }
+  function importCSV(event){
+    const file=event.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const lines=e.target.result.split('
+').map(l=>l.trim()).filter(l=>l);
+      let dataStart=-1;
+      for(let i=0;i<lines.length;i++){if(lines[i].includes('月度')&&lines[i].includes('日付')&&lines[i].includes('税込売上')){dataStart=i+1;break;}}
+      if(dataStart===-1){alert('CSVの形式が正しくありません');return;}
+      const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
+      const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
+      const imported=[];
+      for(let i=dataStart;i<lines.length;i++){
+        const cols=lines[i].split(',');
+        if(cols[0].includes('月度別集計')||cols[0]==='')break;
+        if(cols.length<3)break;
+        const dateStr=cols[1].trim().replace(///g,'-');
+        const parts=dateStr.split('-');if(parts.length!==3)continue;
+        const nd=parts[0]+'-'+parts[1].padStart(2,'0')+'-'+parts[2].padStart(2,'0');
+        const taxInc=parseFloat(cols[2]);if(isNaN(taxInc)||taxInc<=0)continue;
+        const taxEx=taxInc/(1+taxRate);const pay=taxEx*payRate;const pm=getPayMonth(nd);
+        imported.push({dateStr:nd,taxInc,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label});
+      }
+      if(imported.length===0){alert('インポートできるデータが見つかりませんでした');return;}
+      const mode=confirm(imported.length+'件のデータが見つかりました。
+OK→既存データに追加
+キャンセル→既存データを置き換え');
+      if(mode){const existing=new Set(entries.map(e=>e.dateStr+'_'+e.taxInc));const newE=imported.filter(e=>!existing.has(e.dateStr+'_'+e.taxInc));entries=[...entries,...newE];alert(newE.length+'件を追加しました');}
+      else{entries=imported;alert(imported.length+'件のデータで置き換えました');}
+      entries.sort((a,b)=>a.dateStr.localeCompare(b.dateStr));currentMonthKey=null;save();render();
+    };
+    reader.readAsText(file,'UTF-8');event.target.value='';
+  }
+  function clearAll(){if(confirm('全データを削除しますか？')){entries=[];openMonths.clear();currentMonthKey=null;localStorage.removeItem('taxiEntries4');render();}}
+  render();
+</script>
+</body>
+</html>
