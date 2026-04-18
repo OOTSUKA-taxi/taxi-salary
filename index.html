@@ -6,11 +6,11 @@
 <title>タクシー給料計算</title>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="給料計算">
 <meta name="theme-color" content="#f5c518">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="給料計算">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -172,8 +172,7 @@
   let editIdx = -1;
   (function() {
     const t = new Date();
-    document.getElementById('dateInput').value =
-      t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    document.getElementById('dateInput').value = t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
   })();
   entries = entries.map(e => { const pm = getPayMonth(e.dateStr); return { ...e, payMonthKey: pm.key, payMonthLabel: pm.label }; });
   save();
@@ -183,144 +182,145 @@
     if (d >= 16) { const nm = m===12?1:m+1; const ny = m===12?y+1:y; return { key: ny+'-'+String(nm).padStart(2,'0'), label: ny+'年'+nm+'月度' }; }
     else { return { key: y+'-'+String(m).padStart(2,'0'), label: y+'年'+m+'月度' }; }
   }
-  function getPeriodLabel(key) { const [y,m]=key.split('-').map(Number); const pm=m===1?12:m-1; const py=m===1?y-1:y; return py+'/'+pm+'/16 〜 '+y+'/'+m+'/15'; }
+  function getPeriodLabel(key) { const [y, m] = key.split('-').map(Number); const pm = m===1?12:m-1; const py = m===1?y-1:y; return py+'/'+pm+'/16 〜 '+y+'/'+m+'/15'; }
   function groupByMonth() {
     const map = {};
-    entries.forEach((e,idx) => { const k=e.payMonthKey; if(!map[k]) map[k]={label:e.payMonthLabel,key:k,items:[]}; map[k].items.push({...e,idx}); });
-    return Object.values(map).sort((a,b)=>a.key.localeCompare(b.key));
+    entries.forEach((e, idx) => { const k = e.payMonthKey; if (!map[k]) map[k] = { label: e.payMonthLabel, key: k, items: [] }; map[k].items.push({ ...e, idx }); });
+    return Object.values(map).sort((a, b) => a.key.localeCompare(b.key));
   }
   function save() { localStorage.setItem('taxiEntries4', JSON.stringify(entries)); }
   function addEntry() {
-    const dateVal=document.getElementById('dateInput').value;
-    const val=parseFloat(document.getElementById('salesInput').value);
-    if(!dateVal){alert('日付を入力してください');return;}
-    if(isNaN(val)||val<=0){alert('正しい売上額を入力してください');return;}
-    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
-    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
-    const taxEx=val/(1+taxRate); const pay=taxEx*payRate; const pm=getPayMonth(dateVal);
-    entries.push({dateStr:dateVal,taxInc:val,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label});
-    entries.sort((a,b)=>a.dateStr.localeCompare(b.dateStr));
-    currentMonthKey=pm.key; openMonths.add(pm.key); save();
-    document.getElementById('salesInput').value=''; render();
+    const dateVal = document.getElementById('dateInput').value;
+    const val = parseFloat(document.getElementById('salesInput').value);
+    if (!dateVal) { alert('日付を入力してください'); return; }
+    if (isNaN(val) || val <= 0) { alert('正しい売上額を入力してください'); return; }
+    const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0.1;
+    const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
+    const taxEx = val / (1 + taxRate); const pay = taxEx * payRate; const pm = getPayMonth(dateVal);
+    entries.push({ dateStr: dateVal, taxInc: val, taxEx, pay, payMonthKey: pm.key, payMonthLabel: pm.label });
+    entries.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+    currentMonthKey = pm.key; openMonths.add(pm.key); save();
+    document.getElementById('salesInput').value = ''; render();
   }
-  function deleteEntry(i) { if(!confirm('削除しますか？'))return; entries.splice(i,1); save(); render(); }
+  function deleteEntry(i) { if (!confirm('削除しますか？')) return; entries.splice(i, 1); save(); render(); }
   function recalc() {
-    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
-    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
-    entries=entries.map(e=>{const taxEx=e.taxInc/(1+taxRate);const pay=taxEx*payRate;const pm=getPayMonth(e.dateStr);return{...e,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label};});
+    const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0.1;
+    const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
+    entries = entries.map(e => { const taxEx = e.taxInc/(1+taxRate); const pay = taxEx*payRate; const pm = getPayMonth(e.dateStr); return { ...e, taxEx, pay, payMonthKey: pm.key, payMonthLabel: pm.label }; });
     save(); render();
   }
   function changeMonth(delta) {
-    const groups=groupByMonth(); if(groups.length===0)return;
-    const keys=groups.map(g=>g.key);
-    let idx=currentMonthKey?keys.indexOf(currentMonthKey):keys.length-1;
-    if(idx===-1)idx=keys.length-1; idx=(idx+delta+keys.length)%keys.length;
-    currentMonthKey=keys[idx]; render();
+    const groups = groupByMonth(); if (groups.length === 0) return;
+    const keys = groups.map(g => g.key);
+    let idx = currentMonthKey ? keys.indexOf(currentMonthKey) : keys.length - 1;
+    if (idx === -1) idx = keys.length - 1;
+    idx = (idx + delta + keys.length) % keys.length; currentMonthKey = keys[idx]; render();
   }
-  function toggleMonth(key) { if(openMonths.has(key))openMonths.delete(key); else openMonths.add(key); render(); }
-  function openEdit(i) { editIdx=i; document.getElementById('editDate').value=entries[i].dateStr; document.getElementById('editSales').value=entries[i].taxInc; document.getElementById('editOverlay').classList.add('show'); }
-  function closeEdit() { document.getElementById('editOverlay').classList.remove('show'); editIdx=-1; }
+  function toggleMonth(key) { if (openMonths.has(key)) openMonths.delete(key); else openMonths.add(key); render(); }
+  function openEdit(i) { editIdx = i; document.getElementById('editDate').value = entries[i].dateStr; document.getElementById('editSales').value = entries[i].taxInc; document.getElementById('editOverlay').classList.add('show'); }
+  function closeEdit() { document.getElementById('editOverlay').classList.remove('show'); editIdx = -1; }
   function saveEdit() {
-    const dateVal=document.getElementById('editDate').value;
-    const val=parseFloat(document.getElementById('editSales').value);
-    if(!dateVal){alert('日付を入力してください');return;}
-    if(isNaN(val)||val<=0){alert('正しい売上額を入力してください');return;}
-    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
-    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
-    const taxEx=val/(1+taxRate);const pay=taxEx*payRate;const pm=getPayMonth(dateVal);
-    entries[editIdx]={dateStr:dateVal,taxInc:val,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label};
-    entries.sort((a,b)=>a.dateStr.localeCompare(b.dateStr));
-    currentMonthKey=pm.key;openMonths.add(pm.key);save();closeEdit();render();
+    const dateVal = document.getElementById('editDate').value;
+    const val = parseFloat(document.getElementById('editSales').value);
+    if (!dateVal) { alert('日付を入力してください'); return; }
+    if (isNaN(val) || val <= 0) { alert('正しい売上額を入力してください'); return; }
+    const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0.1;
+    const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
+    const taxEx = val / (1 + taxRate); const pay = taxEx * payRate; const pm = getPayMonth(dateVal);
+    entries[editIdx] = { dateStr: dateVal, taxInc: val, taxEx, pay, payMonthKey: pm.key, payMonthLabel: pm.label };
+    entries.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+    currentMonthKey = pm.key; openMonths.add(pm.key); save(); closeEdit(); render();
   }
-  function changeYear(delta){currentYear+=delta;renderYearSummary();}
-  function renderYearSummary(){
-    const ye=entries.filter(e=>parseInt(e.dateStr.split('-')[0])===currentYear);
-    const ti=ye.reduce((s,e)=>s+e.taxInc,0),tx=ye.reduce((s,e)=>s+e.taxEx,0),tp=ye.reduce((s,e)=>s+e.pay,0);
-    document.getElementById('yearLabel').textContent=currentYear+'年';
-    document.getElementById('yTaxInc').textContent=fmt(ti);
-    document.getElementById('yTaxEx').textContent=fmt(tx);
-    document.getElementById('yPay').textContent=fmt(tp);
-    document.getElementById('yAvg').textContent=ye.length>0?fmt(tp/ye.length):'¥0';
-    document.getElementById('yCount').textContent=ye.length+'出番';
+  function changeYear(delta) { currentYear += delta; renderYearSummary(); }
+  function renderYearSummary() {
+    const ye = entries.filter(e => parseInt(e.dateStr.split('-')[0]) === currentYear);
+    const ti = ye.reduce((s,e) => s+e.taxInc, 0); const tx = ye.reduce((s,e) => s+e.taxEx, 0); const tp = ye.reduce((s,e) => s+e.pay, 0);
+    document.getElementById('yearLabel').textContent = currentYear+'年';
+    document.getElementById('yTaxInc').textContent = fmt(ti); document.getElementById('yTaxEx').textContent = fmt(tx);
+    document.getElementById('yPay').textContent = fmt(tp);
+    document.getElementById('yAvg').textContent = ye.length > 0 ? fmt(tp / ye.length) : '¥0';
+    document.getElementById('yCount').textContent = ye.length+'出番';
   }
-  function render(){
-    const container=document.getElementById('listContainer');
-    const groups=groupByMonth();
-    if(entries.length===0){container.innerHTML='<p class="empty">まだ売上が入力されていません</p>';document.getElementById('monthLabel').textContent='---';document.getElementById('yearCard').style.display='none';document.getElementById('btnCsv').style.display='none';document.getElementById('btnClear').style.display='none';return;}
-    if(!currentMonthKey||!groups.find(g=>g.key===currentMonthKey))currentMonthKey=groups[groups.length-1].key;
-    const g=groups.find(g=>g.key===currentMonthKey);
-    document.getElementById('monthLabel').textContent=g?g.label:'---';
-    if(!g){container.innerHTML='<p class="empty">データがありません</p>';return;}
-    let mTaxInc=0,mTaxEx=0,mPay=0;
-    g.items.forEach(e=>{mTaxInc+=e.taxInc;mTaxEx+=e.taxEx;mPay+=e.pay;});
-    const isOpen=openMonths.has(g.key);
-    const period=getPeriodLabel(g.key);
-    let tableHtml='';
-    if(isOpen){
-      const rows=g.items.map(e=>{const[,mm,dd]=e.dateStr.split('-');return '<tr><td>'+parseInt(mm)+'月'+parseInt(dd)+'日<div style="margin-top:4px;"><button class="btn-edit" onclick="openEdit('+e.idx+')">✏️ 編集</button><button class="btn-del" onclick="deleteEntry('+e.idx+')">削除</button></div></td><td class="fw">'+fmt(e.taxInc)+'</td><td>'+fmt(e.taxEx)+'</td><td class="pay">'+fmt(e.pay)+'</td></tr>';}).join('');
-      tableHtml='<div class="month-body"><table><thead><tr><th style="text-align:left;">日付</th><th>税込売上</th><th>税抜き売上</th><th>支給額</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  function render() {
+    const container = document.getElementById('listContainer'); const groups = groupByMonth();
+    if (entries.length === 0) {
+      container.innerHTML = '<p class="empty">まだ売上が入力されていません</p>';
+      document.getElementById('monthLabel').textContent = '---';
+      document.getElementById('yearCard').style.display = 'none';
+      document.getElementById('btnCsv').style.display = 'none';
+      document.getElementById('btnClear').style.display = 'none'; return;
     }
-    container.innerHTML='<div><div class="month-header '+(isOpen?'open':'')+'" onclick="toggleMonth(''+g.key+'')"><div><div class="month-title-txt">'+g.label+'</div><div class="month-sub">'+period+'　'+g.items.length+'出番</div></div><div style="display:flex;align-items:center;gap:12px;"><div class="month-stats"><div class="ms-item"><span class="ms-label">税込売上</span><span class="ms-val">'+fmt(mTaxInc)+'</span></div><div class="ms-item"><span class="ms-label">支給額</span><span class="ms-val accent">'+fmt(mPay)+'</span></div></div><span class="toggle '+(isOpen?'open':'')+'">▼</span></div></div>'+tableHtml+'</div>';
-    document.getElementById('yearCard').style.display='block';
-    document.getElementById('btnCsv').style.display='block';
-    document.getElementById('btnClear').style.display='block';
+    if (!currentMonthKey || !groups.find(g => g.key === currentMonthKey)) currentMonthKey = groups[groups.length - 1].key;
+    const g = groups.find(g => g.key === currentMonthKey);
+    document.getElementById('monthLabel').textContent = g ? g.label : '---';
+    if (!g) { container.innerHTML = '<p class="empty">データがありません</p>'; return; }
+    let mTaxInc = 0, mTaxEx = 0, mPay = 0;
+    g.items.forEach(e => { mTaxInc += e.taxInc; mTaxEx += e.taxEx; mPay += e.pay; });
+    const isOpen = openMonths.has(g.key); const period = getPeriodLabel(g.key);
+    let tableHtml = '';
+    if (isOpen) {
+      const rows = g.items.map(e => { const [,mm,dd] = e.dateStr.split('-'); return '<tr><td>'+parseInt(mm)+'月'+parseInt(dd)+'日<div style="margin-top:4px;"><button class="btn-edit" onclick="openEdit('+e.idx+')">✏️ 編集</button><button class="btn-del" onclick="deleteEntry('+e.idx+')">削除</button></div></td><td class="fw">'+fmt(e.taxInc)+'</td><td>'+fmt(e.taxEx)+'</td><td class="pay">'+fmt(e.pay)+'</td></tr>'; }).join('');
+      tableHtml = '<div class="month-body"><table><thead><tr><th style="text-align:left;">日付</th><th>税込売上</th><th>税抜き売上</th><th>支給額</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    }
+    container.innerHTML = '<div><div class="month-header '+(isOpen?'open':'')+'" onclick="toggleMonth(''+g.key+'')"><div><div class="month-title-txt">'+g.label+'</div><div class="month-sub">'+period+'　'+g.items.length+'出番</div></div><div style="display:flex;align-items:center;gap:12px;"><div class="month-stats"><div class="ms-item"><span class="ms-label">税込売上</span><span class="ms-val">'+fmt(mTaxInc)+'</span></div><div class="ms-item"><span class="ms-label">支給額</span><span class="ms-val accent">'+fmt(mPay)+'</span></div></div><span class="toggle '+(isOpen?'open':'')+'">▼</span></div></div>'+tableHtml+'</div>';
+    document.getElementById('yearCard').style.display = 'block';
+    document.getElementById('btnCsv').style.display = 'block';
+    document.getElementById('btnClear').style.display = 'block';
     renderYearSummary();
   }
-  function exportCSV(){
-    const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
-    const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
-    let csv='﻿月度,日付,税込売上,税抜き売上,支給額
+  function exportCSV() {
+    const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0.1;
+    const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
+    let csv = '﻿月度,日付,税込売上,税抜き売上,支給額
 ';
-    entries.forEach(e=>{const[y,m,d]=e.dateStr.split('-');csv+=e.payMonthLabel+','+y+'/'+parseInt(m)+'/'+parseInt(d)+','+Math.round(e.taxInc)+','+Math.round(e.taxEx)+','+Math.round(e.pay)+'
-';});
-    const groups=groupByMonth();
-    csv+='
+    entries.forEach(e => { const [y,m,d] = e.dateStr.split('-'); csv += e.payMonthLabel+','+y+'/'+parseInt(m)+'/'+parseInt(d)+','+Math.round(e.taxInc)+','+Math.round(e.taxEx)+','+Math.round(e.pay)+'
+'; });
+    const groups = groupByMonth();
+    csv += '
 月度別集計
 月度,出番数,税込売上合計,税抜き売上合計,支給額合計
 ';
-    groups.forEach(g=>{let ti=0,tx=0,tp=0;g.items.forEach(e=>{ti+=e.taxInc;tx+=e.taxEx;tp+=e.pay;});csv+=g.label+','+g.items.length+','+Math.round(ti)+','+Math.round(tx)+','+Math.round(tp)+'
-';});
-    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    const t=new Date();
-    a.href=url;a.download='タクシー給料_'+t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'.csv';
-    a.click();URL.revokeObjectURL(url);
+    groups.forEach(g => { let ti=0,tx=0,tp=0; g.items.forEach(e=>{ti+=e.taxInc;tx+=e.taxEx;tp+=e.pay;}); csv += g.label+','+g.items.length+','+Math.round(ti)+','+Math.round(tx)+','+Math.round(tp)+'
+'; });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); const t = new Date();
+    a.href = url; a.download = 'タクシー給料_'+t.getFullYear()+String(t.getMonth()+1).padStart(2,'0')+String(t.getDate()).padStart(2,'0')+'.csv';
+    a.click(); URL.revokeObjectURL(url);
   }
-  function importCSV(event){
-    const file=event.target.files[0];if(!file)return;
-    const reader=new FileReader();
-    reader.onload=function(e){
-      const lines=e.target.result.split('
-').map(l=>l.trim()).filter(l=>l);
-      let dataStart=-1;
-      for(let i=0;i<lines.length;i++){if(lines[i].includes('月度')&&lines[i].includes('日付')&&lines[i].includes('税込売上')){dataStart=i+1;break;}}
-      if(dataStart===-1){alert('CSVの形式が正しくありません');return;}
-      const taxRate=parseFloat(document.getElementById('taxRate').value)/100||0.1;
-      const payRate=parseFloat(document.getElementById('payRate').value)/100||0.64;
-      const imported=[];
-      for(let i=dataStart;i<lines.length;i++){
-        const cols=lines[i].split(',');
-        if(cols[0].includes('月度別集計')||cols[0]==='')break;
-        if(cols.length<3)break;
-        const dateStr=cols[1].trim().replace(///g,'-');
-        const parts=dateStr.split('-');if(parts.length!==3)continue;
-        const nd=parts[0]+'-'+parts[1].padStart(2,'0')+'-'+parts[2].padStart(2,'0');
-        const taxInc=parseFloat(cols[2]);if(isNaN(taxInc)||taxInc<=0)continue;
-        const taxEx=taxInc/(1+taxRate);const pay=taxEx*payRate;const pm=getPayMonth(nd);
-        imported.push({dateStr:nd,taxInc,taxEx,pay,payMonthKey:pm.key,payMonthLabel:pm.label});
+  function importCSV(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const lines = e.target.result.split('
+').map(l => l.trim()).filter(l => l);
+      let dataStart = -1;
+      for (let i = 0; i < lines.length; i++) { if (lines[i].includes('月度') && lines[i].includes('日付') && lines[i].includes('税込売上')) { dataStart = i + 1; break; } }
+      if (dataStart === -1) { alert('CSVの形式が正しくありません'); return; }
+      const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0.1;
+      const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
+      const imported = [];
+      for (let i = dataStart; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+        if (cols[0].includes('月度別集計') || cols[0] === '') break;
+        if (cols.length < 3) break;
+        const dateStr = cols[1].trim().replace(///g, '-'); const parts = dateStr.split('-');
+        if (parts.length !== 3) continue;
+        const nd = parts[0]+'-'+parts[1].padStart(2,'0')+'-'+parts[2].padStart(2,'0');
+        const taxInc = parseFloat(cols[2]); if (isNaN(taxInc) || taxInc <= 0) continue;
+        const taxEx = taxInc / (1 + taxRate); const pay = taxEx * payRate; const pm = getPayMonth(nd);
+        imported.push({ dateStr: nd, taxInc, taxEx, pay, payMonthKey: pm.key, payMonthLabel: pm.label });
       }
-      if(imported.length===0){alert('インポートできるデータが見つかりませんでした');return;}
-      const mode=confirm(imported.length+'件のデータが見つかりました。
+      if (imported.length === 0) { alert('インポートできるデータが見つかりませんでした'); return; }
+      const mode = confirm(imported.length+'件のデータが見つかりました。
 OK→既存データに追加
 キャンセル→既存データを置き換え');
-      if(mode){const existing=new Set(entries.map(e=>e.dateStr+'_'+e.taxInc));const newE=imported.filter(e=>!existing.has(e.dateStr+'_'+e.taxInc));entries=[...entries,...newE];alert(newE.length+'件を追加しました');}
-      else{entries=imported;alert(imported.length+'件のデータで置き換えました');}
-      entries.sort((a,b)=>a.dateStr.localeCompare(b.dateStr));currentMonthKey=null;save();render();
+      if (mode) { const existing = new Set(entries.map(e => e.dateStr + '_' + e.taxInc)); const newE = imported.filter(e => !existing.has(e.dateStr + '_' + e.taxInc)); entries = [...entries, ...newE]; alert(newE.length+'件を追加しました'); }
+      else { entries = imported; alert(imported.length+'件のデータで置き換えました'); }
+      entries.sort((a, b) => a.dateStr.localeCompare(b.dateStr)); currentMonthKey = null; save(); render();
     };
-    reader.readAsText(file,'UTF-8');event.target.value='';
+    reader.readAsText(file, 'UTF-8'); event.target.value = '';
   }
-  function clearAll(){if(confirm('全データを削除しますか？')){entries=[];openMonths.clear();currentMonthKey=null;localStorage.removeItem('taxiEntries4');render();}}
+  function clearAll() { if (confirm('全データを削除しますか？')) { entries = []; openMonths.clear(); currentMonthKey = null; localStorage.removeItem('taxiEntries4'); render(); } }
   render();
 </script>
 </body>
