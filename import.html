@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>データインポート中...</title>
+<style>
+body { background:#0d0d0d; color:#f0f0f0; font-family:sans-serif; display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0; flex-direction:column; gap:16px; }
+.msg { font-size:1.2rem; }
+.sub { font-size:0.85rem; color:#888; }
+</style>
+</head>
+<body>
+<div class="msg">⏳ データをインポート中...</div>
+<div class="sub" id="status"></div>
+<script>
+const TAX_RATE = 0.1;
+const PAY_RATE = 0.64;
+function getPayMonth(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  if (d >= 16) {
+    const nm = m === 12 ? 1 : m + 1;
+    const ny = m === 12 ? y + 1 : y;
+    return { key: ny+'-'+String(nm).padStart(2,'0'), label: ny+'年'+nm+'月度' };
+  } else {
+    return { key: y+'-'+String(m).padStart(2,'0'), label: y+'年'+m+'月度' };
+  }
+}
+const rawData = [
+  ['2026-01-03',122630],['2026-01-05',108430],['2026-01-08',117950],
+  ['2026-01-10',113000],['2026-01-13',130770],['2026-01-15',137520],
+  ['2026-01-19',144300],['2026-01-21',128950],['2026-01-23',121780],
+  ['2026-03-14',123600],['2026-03-16',116370],['2026-03-18',140180],
+  ['2026-03-21',121180],['2026-03-24',126480],['2026-03-26',114730],
+  ['2026-03-30',111900],['2026-04-01',132400],['2026-04-03',135000],
+  ['2026-04-06',120870],['2026-04-08',111130],['2026-04-10',131200],
+  ['2026-04-13',131510],['2026-04-15',145740],['2026-04-17',134560],
+];
+const entries = rawData.map(([dateStr, taxInc]) => {
+  const taxEx = taxInc / (1 + TAX_RATE);
+  const pay = taxEx * PAY_RATE;
+  const pm = getPayMonth(dateStr);
+  return { dateStr, taxInc, taxEx, pay, payMonthKey: pm.key, payMonthLabel: pm.label };
+});
+localStorage.setItem('taxiEntries4', JSON.stringify(entries));
+document.getElementById('status').textContent = entries.length + '件のデータを保存しました。アプリに移動します...';
+setTimeout(() => { location.href = './'; }, 1500);
+</script>
+</body>
+</html>
