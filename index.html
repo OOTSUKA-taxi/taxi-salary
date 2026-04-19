@@ -214,7 +214,7 @@
     const t = new Date();
     document.getElementById('dateInput').value =
       `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-  })();
+ 2})();
 
   // 起動時に既存データの月キーを再計算
   entries = entries.map(e => {
@@ -246,7 +246,7 @@
   function groupByMonth() {
     const map = {};
     entries.forEach((e, idx) => {
-      const k = e.payMonthKey;
+ 2    const k = e.payMonthKey;
       if (!map[k]) map[k] = { label: e.payMonthLabel, key: k, items: [] };
       map[k].items.push({ ...e, idx });
     });
@@ -317,7 +317,7 @@
     editIdx = i;
     document.getElementById('editDate').value = entries[i].dateStr;
     document.getElementById('editSales').value = entries[i].taxInc;
-    document.getElementById('editOverlay').classList.add('show');
+ 2  document.getElementById('editOverlay').classList.add('show');
   }
 
   function closeEdit() {
@@ -379,7 +379,7 @@
     }
 
     // 月キーが未設定または存在しない場合は最新月
-    if (!currentMonthKey || !groups.find(g => g.key === currentMonthKey)) {
+ 2  if (!currentMonthKey || !groups.find(g => g.key === currentMonthKey)) {
       currentMonthKey = groups[groups.length - 1].key;
     }
 
@@ -404,13 +404,13 @@
             <td>
               ${parseInt(mm)}月${parseInt(dd)}日
               <div style="margin-top:4px;">
-                <button class="btn-edit" onclick="openEdit(${e.idx})">✏️ 編集</button>
+               2<button class="btn-edit" onclick="openEdit(${e.idx})">✏️ 編集</button>
                 <button class="btn-del" onclick="deleteEntry(${e.idx})">削除</button>
               </div>
             </td>
             <td class="fw">${fmt(e.taxInc)}</td>
             <td>${fmt(e.taxEx)}</td>
-            <td class="pay">${fmt(e.pay)}</td>
+         2  <td class="pay">${fmt(e.pay)}</td>
           </tr>`;
       }).join('');
 
