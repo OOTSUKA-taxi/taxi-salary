@@ -214,7 +214,7 @@
     const t = new Date();
     document.getElementById('dateInput').value =
       `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
- 2})();
+  })();
 
   // 起動時に既存データの月キーを再計算
   entries = entries.map(e => {
@@ -230,7 +230,7 @@
     if (d >= 16) {
       const nm = m === 12 ? 1 : m + 1;
       const ny = m === 12 ? y + 1 : y;
-      return { key: `${ny}-${String(nm).padStart(2,'0')}`, label: `${ny}年${nm}月度` };
+      return { key: `${ny}-${String(nm).padStart(2,'0')}`, label: `${ny}�t${nm}月度` };
     } else {
       return { key: `${y}-${String(m).padStart(2,'0')}`, label: `${y}年${m}月度` };
     }
@@ -246,7 +246,7 @@
   function groupByMonth() {
     const map = {};
     entries.forEach((e, idx) => {
- 2    const k = e.payMonthKey;
+      const k = e.payMonthKey;
       if (!map[k]) map[k] = { label: e.payMonthLabel, key: k, items: [] };
       map[k].items.push({ ...e, idx });
     });
@@ -317,7 +317,7 @@
     editIdx = i;
     document.getElementById('editDate').value = entries[i].dateStr;
     document.getElementById('editSales').value = entries[i].taxInc;
- 2  document.getElementById('editOverlay').classList.add('show');
+    document.getElementById('editOverlay').classList.add('show');
   }
 
   function closeEdit() {
@@ -359,7 +359,7 @@
     document.getElementById('yearLabel').textContent = `${currentYear}年`;
     document.getElementById('yTaxInc').textContent = fmt(ti);
     document.getElementById('yTaxEx').textContent = fmt(tx);
-  2 document.getElementById('yPay').textContent = fmt(tp);
+    document.getElementById('yPay').textContent = fmt(tp);
     document.getElementById('yAvg').textContent = ye.length > 0 ? fmt(tp / ye.length) : '¥0';
     document.getElementById('yCount').textContent = `${ye.length}出番`;
   }
@@ -379,7 +379,7 @@
     }
 
     // 月キーが未設定または存在しない場合は最新月
- 2  if (!currentMonthKey || !groups.find(g => g.key === currentMonthKey)) {
+    if (!currentMonthKey || !groups.find(g => g.key === currentMonthKey)) {
       currentMonthKey = groups[groups.length - 1].key;
     }
 
@@ -404,20 +404,20 @@
             <td>
               ${parseInt(mm)}月${parseInt(dd)}日
               <div style="margin-top:4px;">
-               2<button class="btn-edit" onclick="openEdit(${e.idx})">✏️ 編集</button>
+                <button class="btn-edit" onclick="openEdit(${e.idx})">✏️ 編集</button>
                 <button class="btn-del" onclick="deleteEntry(${e.idx})">削除</button>
               </div>
             </td>
             <td class="fw">${fmt(e.taxInc)}</td>
             <td>${fmt(e.taxEx)}</td>
-         2  <td class="pay">${fmt(e.pay)}</td>
+            <td class="pay">${fmt(e.pay)}</td>
           </tr>`;
       }).join('');
 
       tableHtml = `
         <div class="month-body">
           <table>
-   2        <thead><tr>
+            <thead><tr>
               <th style="text-align:left;">日付</th>
               <th>税込売上</th><th>税抜き売上</th><th>支給額</th>
             </tr></thead>
@@ -428,7 +428,7 @@
 
     container.innerHTML = `
       <div>
-  2     <div class="month-header ${isOpen ? 'open' : ''}" onclick="toggleMonth('${g.key}')">
+        <div class="month-header ${isOpen ? 'open' : ''}" onclick="toggleMonth('${g.key}')">
           <div>
             <div class="month-title-txt">${g.label}</div>
             <div class="month-sub">${period}　${g.items.length}出番</div>
@@ -464,7 +464,7 @@
     entries.forEach(e => {
       const [y,m,d] = e.dateStr.split('-');
       csv += `${e.payMonthLabel},${y}/${parseInt(m)}/${parseInt(d)},${Math.round(e.taxInc)},${Math.round(e.taxEx)},${Math.round(e.pay)}\n`;
- 2   };
+    });
     const groups = groupByMonth();
     csv += '\n月度別集計\n月度,出番数,税込売上合計,税抜き売上合計,支給額合計\n';
     groups.forEach(g => {
@@ -473,7 +473,7 @@
       csv += `${g.label},${g.items.length},${Math.round(ti)},${Math.round(tx)},${Math.round(tp)}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  2 const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const t = new Date();
     a.href = url;
@@ -486,7 +486,7 @@
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
- 2  reader.onload = function(e) {
+    reader.onload = function(e) {
       const lines = e.target.result.split('\n').map(l => l.trim()).filter(l => l);
       let dataStart = -1;
       for (let i = 0; i < lines.length; i++) {
@@ -500,7 +500,7 @@
       const imported = [];
       for (let i = dataStart; i < lines.length; i++) {
         const cols = lines[i].split(',');
-   2    if (cols[0].includes('月度別集計') || cols[0] === '') break;
+        if (cols[0].includes('月度別集計') || cols[0] === '') break;
         if (cols.length < 3) break;
         const dateStr = cols[1].trim().replace(/\//g, '-');
         const parts = dateStr.split('-');
@@ -568,7 +568,7 @@
         entries = imported;
         alert(imported.length + '件のデータで置き換えました');
       }
- 2    entries.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+      entries.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
       currentMonthKey = null;
       save();
       history.replaceState({}, '', location.pathname);
