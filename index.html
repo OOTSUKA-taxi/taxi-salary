@@ -555,7 +555,7 @@
       const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
       const imported = compact.map(([dateStr, taxInc]) => {
         const taxEx = taxInc / (1 + taxRate);
-        const pay = taxEx * payRate;
+     .  const pay = taxEx * payRate;
         const pm = getPayMonth(dateStr);
         return { dateStr, taxInc, taxEx, pay, payMonthKey: pm.key, payMonthLabel: pm.label };
       });
@@ -563,7 +563,7 @@
         const existing = new Set(entries.map(e => e.dateStr + '_' + e.taxInc));
         const newE = imported.filter(e => !existing.has(e.dateStr + '_' + e.taxInc));
         entries = [...entries, ...newE];
-        alert(newE.length + '件を追加しました');
+     .  alert(newE.length + '件を追加しました');
       } else {
         entries = imported;
         alert(imported.length + '件のデータで置き換えました');
