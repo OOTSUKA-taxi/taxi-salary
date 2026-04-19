@@ -100,6 +100,7 @@
   /* ボタン群 */
   .btn-csv { display: block; width: 100%; background: none; border: 1px solid var(--accent2); border-radius: 8px; color: var(--accent2); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.84rem; padding: 11px; margin-bottom: 10px; }
   .btn-import { display: block; width: 100%; background: none; border: 1px solid #4a8a4a; border-radius: 8px; color: #6abf6a; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.84rem; padding: 11px; margin-bottom: 10px; }
+  .btn-share { display: block; width: 100%; background: none; border: 1px solid #4a6a8a; border-radius: 8px; color: #6a9fbf; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.84rem; padding: 11px; margin-bottom: 10px; }
   .btn-clear { display: block; width: 100%; background: none; border: 1px solid #333; border-radius: 8px; color: var(--muted); cursor: pointer; font-family: 'Noto Sans JP', sans-serif; font-size: 0.8rem; padding: 10px; margin-bottom: 40px; }
 
   /* 編集モーダル */
@@ -184,6 +185,7 @@
 <button class="btn-csv" id="btnCsv" style="display:none;" onclick="exportCSV()">📥 CSVダウンロード（Google Drive保存用）</button>
 <button class="btn-import" onclick="document.getElementById('csvFile').click()">📤 CSVインポート（データ復元）</button>
 <input type="file" id="csvFile" accept=".csv" style="display:none;" onchange="importCSV(event)">
+<button class="btn-share" id="btnShare" style="display:none;" onclick="shareLink()">🔗 共有リンクを生成（PC↔スマホ同期）</button>
 <button class="btn-clear" id="btnClear" style="display:none;" onclick="clearAll()">🗑 全データをクリア</button>
 
 <!-- 編集モーダル -->
@@ -349,7 +351,7 @@
     renderYearSummary();
   }
 
-  function renderYearSummary() {
+  function renderYeaRSummary() {
     const ye = entries.filter(e => parseInt(e.dateStr.split('-')[0]) === currentYear);
     const ti = ye.reduce((s,e) => s+e.taxInc, 0);
     const tx = ye.reduce((s,e) => s+e.taxEx, 0);
@@ -371,6 +373,7 @@
       document.getElementById('monthLabel').textContent = '---';
       document.getElementById('yearCard').style.display = 'none';
       document.getElementById('btnCsv').style.display = 'none';
+      document.getElementById('btnShare').style.display = 'none';
       document.getElementById('btnClear').style.display = 'none';
       return;
     }
@@ -449,6 +452,7 @@
 
     document.getElementById('yearCard').style.display = 'block';
     document.getElementById('btnCsv').style.display = 'block';
+    document.getElementById('btnShare').style.display = 'block';
     document.getElementById('btnClear').style.display = 'block';
     renderYearSummary();
   }
@@ -490,7 +494,7 @@
           dataStart = i + 1; break;
         }
       }
-      if (dataStart === -1) { alert('CSVの形式が正しくありません'); return; }
+      if (dataStart === -1) { alert('CSWの形式が正しくありません'); return; }
       const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0.1;
       const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
       const imported = [];
@@ -518,7 +522,7 @@
         alert(`${newE.length}件を追加しました`);
       } else {
         entries = imported;
-        alert(`${imported.length}件のデータで置き換えました`);
+        alert(`${imported.length}䱆のデータで置き換えました`);
       }
       entries.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
       currentMonthKey = null;
@@ -528,6 +532,48 @@
     reader.readAsText(file, 'UTF-8');
     event.target.value = '';
   }
+
+  function shareLink() {
+    const compact = entries.map(e => [e.dateStr, e.taxInc]);
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(compact))));
+    const url = location.origin + location.pathname + '?import=' + encoded;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).then(() => alert('共有リンクをクリップボードにコピーしました！\n別のデバイスのブラウザに貼り付けて開いてください。'));
+    } else {
+      prompt('このURLをコピーして別のデバイスで開いてください：', url);
+    }
+  }
+
+  // URLからインポート
+  (function() {
+    const params = new URLSearchParams(location.search);
+    const imp = params.get('import');
+    if (!imp) return;
+    try {
+      const compact = JSON.parse(decodeURIComponent(escape(atob(imp))));
+      const taxRate = parseFloat(document.getElementById('taxRate').value) / 100 || 0.1;
+      const payRate = parseFloat(document.getElementById('payRate').value) / 100 || 0.64;
+      const imported = compact.map(([dateStr, taxInc]) => {
+        const taxEx = taxInc / (1 + taxRate);
+        const pay = taxEx * payRate;
+        const pm = getPayMonth(dateStr);
+        return { dateStr, taxInc, taxEx, pay, payMonthKey: pm.key, payMonthLabel: pm.label };
+      });
+      if (confirm(imported.length + '件のデータを共有リンクから読み込みます。\nOK→既存データに追加\nキャンセル→置き換え')) {
+        const existing = new Set(entries.map(e => e.dateStr + '_' + e.taxInc));
+        const newE = imported.filter(e => !existing.has(e.dateStr + '_' + e.taxInc));
+        entries = [...entries, ...newE];
+        alert(newE.length + '件を追加しました');
+      } else {
+        entries = imported;
+        alert(imported.length + '件のデータで置き換えました');
+      }
+      entries.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+      currentMonthKey = null;
+      save();
+      history.replaceState({}, '', location.pathname);
+    } catch(e) { alert('リンクの読み込みに失敗しました'); }
+  })();
 
   function clearAll() {
     if (confirm('全データを削除しますか？')) {
